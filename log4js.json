@@ -1,0 +1,28 @@
+{
+  "appenders": {
+    "out": {
+      "type": "stdout",
+      "layout": {
+        "type": "colored",
+        "pattern": "%d{yyyy-MM-dd hh:mm:ss} [%p] %c - %m"
+      }
+    },
+    "app": {
+      "type": "file",
+      "filename": "./log/Logger.log",
+      "layout": {
+        "type": "pattern",
+        "pattern": "%d{yyyy-MM-dd hh:mm:ss} [%p] %c - %m"
+      }
+    }
+  },
+  "categories": {
+    "default": {
+      "appenders": [
+        "out",
+        "app"
+      ],
+      "level": "debug"
+    }
+  }
+}

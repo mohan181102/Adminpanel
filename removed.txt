@@ -1,0 +1,1635 @@
+app.post("/upload", upload.single("Image"), async (req, res) => {
+  const { Name } = req.body;
+
+  const imgdata = req.file;
+
+  try {
+    if (!req.file) {
+      return res.status(400).send("No file uploaded");
+    }
+
+    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${
+      imgdata.filename
+    }`;
+
+    const image = await mdl.db.Gallery.create({
+      Name: Name,
+      Imagepath: imageUrl,
+    });
+
+    res.status(201).json({ image });
+  } catch (error) {
+    console.error("Error uploading images:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+
+//to get the uploaded image
+app.get("/images", async (req, res) => {
+  try {
+    images = await mdl.db.Gallery.findAll();
+    if (!images || images.length === 0) {
+      return res.status(404).json({ message: "No images found" });
+    }
+    res.status(200).json({ images });
+  } catch (error) {
+    console.error("Error retrieving images:", error);
+    res
+      .status(500)
+      .json({ message: "Error retrieving images", error: error.message });
+  }
+});
+
+app.get("/gallery/:brandName", async (req, res) => {
+  const brandName = req.params.brandName;
+  // res.send(req.params)
+  try {
+    const gallery = await mdl.db.Gallery.findAll({
+      where: { Name: brandName },
+    });
+    // res.send(gallery);
+    if (!gallery) {
+      return res.status(404).json({ message: "Gallery not found" });
+    }
+    // console.log(gallery);
+    // const imagePaths = gallery.Imagepath.split(",");
+
+    res.status(200).json({ gallery });
+  } catch (error) {
+    console.error("Error fetching gallery:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+app.get("/image/:id", async (req, res) => {
+  try {
+    const image = await mdl.db.Gallery.findByPk(req.params.id);
+    if (!image) {
+      return res.status(404).json({ message: "Image not found" });
+    }
+    res.setHeader("Content-Type", "application/json");
+    res.status(200).json({ image });
+    // res.send(image);
+    // console.log(image.Imagepath);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+
+**************************************************Api's***********************************************
+// to upload multiple image
+
+// /**
+//  * @swagger
+//  * /gallery/uploads:
+//  *   post:
+//  *     summary: Create and Upload images to a gallery
+//  *     description: Allows uploading multiple images to a specified gallery.
+//  *     tags:
+//  *       - Gallery
+//  *     requestBody:
+//  *       content:
+//  *         multipart/form-data:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               Image:
+//  *                 type: array
+//  *                 items:
+//  *                   type: string
+//  *                   format: binary
+//  *               Name:
+//  *                 type: string
+//  *                 description: Name of the gallery
+//  *     responses:
+//  *       201:
+//  *         description: Images successfully uploaded and saved to the database
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 images:
+//  *                   type: array
+//  *                   items:
+//  *                     type: object
+//  *                     properties:
+//  *                       Name:
+//  *                         type: string
+//  *                       Imagepath:
+//  *                         type: string
+//  *       500:
+//  *         description: Error uploading image
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Error uploading image'
+//  */
+
+// app.post("/gallery/uploads", upload.array("Image"), async (req, res) => {
+//   try {
+//     const { Name } = req.body;
+
+//     const imageUrls = req.files.map((file) => {
+//       return {
+//         Name: Name,
+//         Imagepath: `${req.protocol}://${req.get("host")}/uploads/${
+//           file.filename
+//         }`,
+//       };
+//     });
+//     // res.send({Name,imageurls});
+//     const image = await mdl.db.Gallery.bulkCreate(imageUrls);
+//     res.status(201).send({ image });
+//   } catch (error) {
+//     console.error("Error uploading image:", error);
+//     res.status(500).json({ message: "Error uploading image", error });
+//   }
+// });
+
+//removed from here
+
+//removed from here
+
+// /**
+//  * @swagger
+//  * /gallery/images/all:
+//  *   get:
+//  *     summary: Retrieve all images
+//  *     description: Retrieves all images grouped by their name.
+//  *     tags:
+//  *       - Gallery
+//  *     responses:
+//  *       200:
+//  *         description: Successfully retrieved images
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               additionalProperties:
+//  *                 type: array
+//  *                 items:
+//  *                   type: object
+//  *                   properties:
+//  *                     id:
+//  *                       type: integer
+//  *                     Name:
+//  *                       type: string
+//  *                     Url:
+//  *                       type: string
+//  *                   example:
+//  *                     - id: 1
+//  *                       Name: 'image1'
+//  *                       Url: 'http://example.com/image1.jpg'
+//  *                     - id: 2
+//  *                       Name: 'image1'
+//  *                       Url: 'http://example.com/image2.jpg'
+//  *       404:
+//  *         description: No images found
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'No images found'
+//  *       500:
+//  *         description: Internal server error
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Internal server error'
+//  */
+// app.get("/gallery/images/all", async (req, res) => {
+//   try {
+//     const images = await mdl.db.Gallery.findAll();
+//     if (!images || images.length === 0) {
+//       return res.status(404).json({ message: "No images found" });
+//     }
+
+//     const groupedImages = images.reduce((acc, image) => {
+//       const name = image.Name;
+//       if (!acc[name]) {
+//         acc[name] = [];
+//       }
+//       acc[name].push(image);
+//       return acc;
+//     }, {});
+
+//     res.status(200).json({ groupedImages });
+//   } catch (error) {
+//     console.error("Error retrieving images:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Error retrieving images", error: error.message });
+//   }
+// });
+
+// to get the image by it's id
+
+//removed here
+
+//removed here
+
+// to delete an image
+
+// /**
+//  * @swagger
+//  * /gallery/image/{id}:
+//  *   delete:
+//  *     summary: Delete an image from the gallery
+//  *     description: Deletes a specified image from the gallery by image ID.
+//  *     tags:
+//  *       - Gallery
+//  *     parameters:
+//  *       - in: path
+//  *         name: id
+//  *         required: true
+//  *         schema:
+//  *           type: integer
+//  *         description: The ID of the image to be deleted
+//  *     responses:
+//  *       200:
+//  *         description: Image deleted successfully
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: "Image deleted successfully"
+//  *                 fileName:
+//  *                   type: string
+//  *                   example: "example.jpg"
+//  *       404:
+//  *         description: Image not found
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: "Image not found"
+//  *       500:
+//  *         description: Error deleting image
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: "Error deleting image"
+//  *                 error:
+//  *                   type: string
+//  *                   example: "Internal server error"
+//  */
+// app.delete("/gallery/image/:id", async (req, res) => {
+//   try {
+//     const image = await mdl.db.Gallery.findByPk(req.params.id);
+//     if (!image) {
+//       return res.status(404).json({ message: "Image not found" });
+//     }
+//     const imageUrl = image.Imagepath; // Assuming the field is called Imagepath
+//     const fileName = imageUrl.split("/").pop();
+//     const filePath = path.join(__dirname, "uploads", fileName);
+//     await image.destroy();
+//     deleteFile(filePath);
+//     res.status(200).json({ message: "Image deleted successfully", fileName });
+//   } catch (error) {
+//     console.error("Error deleting image:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Error deleting image", error: error.message });
+//   }
+// });
+
+//delete single gallery
+
+// /**
+//  * @swagger
+//  * /gallery/{name}:
+//  *   delete:
+//  *     summary: Delete an album by name
+//  *     description: Deletes the specified album and all associated images.
+//  *     tags:
+//  *       - Gallery
+//  *     parameters:
+//  *       - in: path
+//  *         name: name
+//  *         required: true
+//  *         description: Name of the album to delete
+//  *         schema:
+//  *           type: string
+//  *     responses:
+//  *       200:
+//  *         description: Album and all associated images deleted successfully
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Album and all associated images deleted successfully'
+//  *       404:
+//  *         description: Album not found
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Album not found'
+//  *       500:
+//  *         description: Internal server error
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Internal server error'
+//  */
+// app.delete("/gallery/:name", async (req, res) => {
+//   try {
+//     // Find the album by its name
+//     const album = await mdl.db.Gallery.findAll({
+//       where: { name: req.params.name },
+//     });
+//     // res.json(album);
+
+//     if (!album) {
+//       return res.status(404).json({ message: "Album not found" });
+//     }
+
+//     for (const image of album) {
+//       const imageUrl = image.Imagepath;
+//       const fileName = imageUrl.split("/").pop();
+//       const filePath = path.join(__dirname, "uploads", fileName);
+//       console.log(`Deleting file: ${filePath}`);
+
+//       deleteFile(filePath);
+
+//       await image.destroy();
+//     }
+
+//     res.status(200).json({
+//       message: "Album and all associated images deleted successfully",
+//     });
+//   } catch (error) {
+//     console.error(error);
+//   }
+// });
+
+//delete multiple galleries
+
+// /**
+//  * @swagger
+//  * /gallery/selectedgalleries/deletegalleries:
+//  *   delete:
+//  *     summary: Delete selected galleries
+//  *     description: Deletes the specified galleries and all associated images.
+//  *     tags:
+//  *       - Gallery
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         application/json:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               items:
+//  *                 type: array
+//  *                 items:
+//  *                   type: string
+//  *             example:
+//  *               items: ["Nameofgallery1", "Nameofgallery2"]
+//  *     responses:
+//  *       200:
+//  *         description: Albums and all associated images deleted successfully
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Albums and all associated images deleted successfully'
+//  *       400:
+//  *         description: No galleries selected for deletion
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'No galleries selected for deletion'
+//  *       500:
+//  *         description: Internal server error
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Internal server error'
+//  */
+// app.delete("/gallery/selectedgalleries/deletegalleries", async (req, res) => {
+//   try {
+//     const selectedGalleries = req.body.items;
+//     console.log(selectedGalleries);
+
+//     if (!selectedGalleries || selectedGalleries.length === 0) {
+//       return res
+//         .status(400)
+//         .json({ message: "No galleries selected for deletion" });
+//     }
+//     for (const galleryName of selectedGalleries) {
+//       const galleries = await mdl.db.Gallery.findAll({
+//         where: { Name: galleryName },
+//       });
+
+//       for (const gallery of galleries) {
+//         const imageUrl = gallery.Imagepath; // Assuming the field is called Imagepath
+//         const fileName = imageUrl.split("/").pop();
+//         const filePath = path.join(__dirname, "uploads", fileName);
+//         // console.log(filePath);
+//         deleteFile(filePath);
+//         await gallery.destroy();
+//       }
+//     }
+//     res.status(200).json({
+//       message: "Albums and all associated images deleted successfully",
+//     });
+//     // console.log("this api is called");
+//   } catch (error) {
+//     console.error("Error deleting galleries:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+// /**
+//  * @swagger
+//  * /gallery/images/name:
+//  *   put:
+//  *     summary: Update gallery name and optionally upload an image
+//  *     description: Updates the name of a gallery and optionally uploads a new image associated with the new gallery name.
+//  *     tags:
+//  *       - Gallery
+//  *     requestBody:
+//  *       content:
+//  *         multipart/form-data:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               oldName:
+//  *                 type: string
+//  *                 description: The old name of the gallery
+//  *               newName:
+//  *                 type: string
+//  *                 description: The new name of the gallery
+//  *               Image:
+//  *                 type: string
+//  *                 format: binary
+//  *                 description: Optional new image to upload
+//  *     responses:
+//  *       200:
+//  *         description: Successfully updated the gallery name and uploaded the new image
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Successfully updated all occurrences of {oldName} to {newName}'
+//  *       404:
+//  *         description: No records found to update
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'No records found to update'
+//  *       500:
+//  *         description: Error updating names
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Error updating names'
+//  *                 error:
+//  *                   type: string
+//  *                   example: 'Error details'
+//  */
+// app.put("/gallery/images/name", upload.single("Image"), async (req, res) => {
+//   const { oldName, newName } = req.body;
+
+//   try {
+//     const [updated] = await mdl.db.Gallery.update(
+//       { Name: newName },
+//       { where: { Name: oldName } }
+//     );
+
+//     let imageUrl = null;
+//     if (req.file) {
+//       imageUrl = `${req.protocol}://${req.get("host")}/uploads/${
+//         req.file.filename
+//       }`;
+
+//       // Assuming you want to save the image URL in the database
+//       const image = await mdl.db.Gallery.create(
+//         { Name: newName, Imagepath: imageUrl },
+//         { where: { Name: newName } }
+//       );
+//     }
+
+//     if (updated) {
+//       res.status(200).json({
+//         message: `Successfully updated all occurrences of ${oldName} to ${newName}`,
+//       });
+//     } else {
+//       res.status(404).json({ message: "No records found to update" });
+//     }
+//   } catch (error) {
+//     console.error("Error updating names:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Error updating names", error: error.message });
+//   }
+// });
+
+//gallery api ends here
+
+//sliders api starts here
+//post api for slider images
+
+// /**
+//  * @swagger
+//  * /api/sliders:
+//  *   post:
+//  *     summary: Create a new slider with multiple images
+//  *     description: Creates a new slider and uploads multiple images associated with it.
+//  *     tags:
+//  *       - Slider
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         multipart/form-data:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               Name:
+//  *                 type: string
+//  *                 description: Name of the slider
+//  *                 example: 'mySlider'
+//  *               Image:
+//  *                 type: array
+//  *                 items:
+//  *                   type: string
+//  *                   format: binary
+//  *                 description: Images to be uploaded for the slider
+//  *     responses:
+//  *       201:
+//  *         description: Slider created successfully
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Slider created successfully'
+//  *                 slider:
+//  *                   type: object
+//  *                   properties:
+//  *                     SliderName:
+//  *                       type: string
+//  *                     Imagepaths:
+//  *                       type: array
+//  *                       items:
+//  *                         type: string
+//  *       400:
+//  *         description: Slider with the same name already exists
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: 'Slider with the same name already exists'
+//  *       500:
+//  *         description: Internal server error
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: 'Internal server error'
+//  */
+// app.post("/api/sliders", upload.array("Image"), async (req, res) => {
+//   const Images = req.files.map((file) => {
+//     return `${req.protocol}://${req.get("host")}/uploads/${file.filename}`;
+//   });
+//   const { Name } = req.body;
+
+//   try {
+//     const existingSlider = await mdl.db.Slider.findOne({
+//       where: { SliderName: Name },
+//     });
+//     if (existingSlider) {
+//       return res
+//         .status(400)
+//         .json({ error: "Slider with the same name already exists" });
+//     }
+
+//     const slider = await mdl.db.Slider.create({
+//       SliderName: Name,
+//       Imagepaths: Images,
+//     });
+//     res.status(201).json({ message: "Slider created successfully", slider });
+//   } catch (error) {
+//     console.error("Error creating Slider:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
+
+// API endpoint to add images to an existing Slider by slider id
+
+// /**
+//  * @swagger
+//  * /api/sliders/{sliderId}/images:
+//  *   post:
+//  *     summary: Add a new image to an existing slider
+//  *     description: Adds a new image to the specified slider and optionally updates the slider name.
+//  *     tags:
+//  *       - Slider
+//  *     parameters:
+//  *       - in: path
+//  *         name: sliderId
+//  *         schema:
+//  *           type: integer
+//  *         required: true
+//  *         description: The ID of the slider to which the image will be added
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         multipart/form-data:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               newName:
+//  *                 type: string
+//  *                 description: New name for the slider (optional)
+//  *                 example: 'newSliderName'
+//  *               Image:
+//  *                 type: string
+//  *                 format: binary
+//  *                 description: Image to be added to the slider
+//  *     responses:
+//  *       200:
+//  *         description: Image added to Slider successfully
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: 'Image added to Slider successfully'
+//  *                 slider:
+//  *                   type: object
+//  *                   properties:
+//  *                     SliderName:
+//  *                       type: string
+//  *                     Imagepaths:
+//  *                       type: array
+//  *                       items:
+//  *                         type: string
+//  *       404:
+//  *         description: Slider not found
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: 'Slider not found'
+//  *       409:
+//  *         description: Image already exists in the slider
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: 'Image already exists in the slider'
+//  *       500:
+//  *         description: Internal server error
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: 'Internal server error'
+//  */
+// app.post(
+//   "/api/sliders/:sliderId/images",
+//   upload.single("Image"),
+//   async (req, res) => {
+//     const sliderId = req.params.sliderId;
+//     const { newName } = req.body;
+
+//     const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${
+//       req.file.filename
+//     }`;
+
+//     try {
+//       const slider = await mdl.db.Slider.findByPk(sliderId);
+//       if (!slider) {
+//         return res.status(404).json({ error: "Slider not found" });
+//       }
+//       slider.SliderName = newName;
+
+//       // Add the new image URL to the existing imageUrls array
+//       // slider.Imagepaths.push(imageUrl);
+//       if (slider.Imagepaths.includes(imageUrl)) {
+//         return res
+//           .status(409)
+//           .json({ error: "Image already exists in the slider" });
+//       }
+
+//       slider.Imagepaths = slider.Imagepaths.concat([imageUrl]);
+
+//       await slider.save();
+
+//       res.json({ message: "Image added to Slider successfully", slider });
+//     } catch (error) {
+//       console.error("Error adding image to Slider:", error);
+//       res.status(500).json({ error: "Internal server error" });
+//     }
+//   }
+// );
+
+//api to get all slider available in the database
+
+// /**
+//  * @swagger
+//  * /api/sliders/all:
+//  *   get:
+//  *     summary: Retrieve all sliders
+//  *     description: Fetches all sliders from the database along with their details.
+//  *     tags:
+//  *       - Slider
+//  *     responses:
+//  *       200:
+//  *         description: A list of sliders
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: array
+//  *               items:
+//  *                 type: object
+//  *                 properties:
+//  *                   Id:
+//  *                     type: integer
+//  *                   SliderName:
+//  *                     type: string
+//  *                   Imagepaths:
+//  *                     type: array
+//  *                     items:
+//  *                       type: string
+//  *       500:
+//  *         description: Internal server error
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: 'Internal server error'
+//  */
+// app.get("/api/sliders/all", async (req, res) => {
+//   try {
+//     // Retrieve all sliders from the database
+//     const sliders = await mdl.db.Slider.findAll({
+//       attributes: ["Id", "SliderName", "Imagepaths"], // Specify the fields you want to retrieve
+//     });
+
+//     // Send the sliders as a JSON response
+//     res.json(sliders);
+//   } catch (error) {
+//     console.error("Error fetching sliders:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
+
+// API  to retrieve a Slider by ID
+
+// /**
+//  * @swagger
+//  * /api/sliders/{sliderId}:
+//  *   get:
+//  *     summary: Retrieve a specific slider
+//  *     description: Fetches details of a specific slider by slider ID.
+//  *     tags:
+//  *       - Slider
+//  *     parameters:
+//  *       - in: path
+//  *         name: sliderId
+//  *         required: true
+//  *         schema:
+//  *           type: integer
+//  *         description: The ID of the slider to retrieve
+//  *     responses:
+//  *       200:
+//  *         description: Details of the slider
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 slider:
+//  *                   type: object
+//  *                   properties:
+//  *                     SliderName:
+//  *                       type: string
+//  *                     Imagepaths:
+//  *                       type: array
+//  *                       items:
+//  *                         type: string
+//  *       404:
+//  *         description: Slider not found
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: "Slider not found"
+//  *       500:
+//  *         description: Internal server error
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: "Internal server error"
+//  */
+// app.get("/api/sliders/:sliderId", async (req, res) => {
+//   const sliderId = req.params.sliderId;
+
+//   try {
+//     const slider = await mdl.db.Slider.findByPk(sliderId);
+//     if (!slider) {
+//       return res.status(404).json({ error: "Slider not found" });
+//     }
+
+//     res.json({ slider });
+//   } catch (error) {
+//     console.error("Error retrieving Slider:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
+
+//to delete the slider by its id
+
+// /**
+//  * @swagger
+//  * /api/sliders/{sliderId}:
+//  *   delete:
+//  *     summary: Delete a slider
+//  *     description: Delete a specific slider by slider ID.
+//  *     tags:
+//  *       - Slider
+//  *     parameters:
+//  *       - in: path
+//  *         name: sliderId
+//  *         required: true
+//  *         schema:
+//  *           type: integer
+//  *         description: The ID of the slider to delete
+//  *     responses:
+//  *       200:
+//  *         description: Details of the slider
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 slider:
+//  *                   type: object
+//  *                   properties:
+//  *                     SliderName:
+//  *                       type: string
+//  *                     Imagepaths:
+//  *                       type: array
+//  *                       items:
+//  *                         type: string
+//  *       404:
+//  *         description: Slider not found
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: "Slider not found"
+//  *       500:
+//  *         description: Internal server error
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: "Internal server error"
+//  */
+// app.delete("/api/sliders/:sliderId", async (req, res) => {
+//   const sliderId = req.params.sliderId;
+
+//   try {
+//     // Find the Slider by ID
+//     const slider = await mdl.db.Slider.findByPk(sliderId);
+//     if (!slider) {
+//       return res.status(404).json({ error: "Slider not found" });
+//     }
+
+//     const imagePaths = slider.Imagepaths;
+//     imagePaths.forEach((imagePath) => {
+//       const filePath = path.join(
+//         __dirname,
+//         "uploads",
+//         path.basename(imagePath)
+//       );
+//       fs.unlink(filePath, (err) => {
+//         if (err) {
+//           console.error(`Error deleting file ${filePath}:`, err);
+//         } else {
+//           console.log(`Successfully deleted file ${filePath}`);
+//         }
+//       });
+//     });
+
+//     // Delete the Slider from the database
+//     await slider.destroy();
+
+//     res.json({ message: "Slider deleted successfully" });
+//   } catch (error) {
+//     console.error("Error deleting Slider:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
+
+// //api to delete single image from the slider
+
+// /**
+//  * @swagger
+//  * /api/sliders/{sliderId}/images:
+//  *   delete:
+//  *     summary: Delete an image from a slider
+//  *     description: Removes a specified image from a slider's image collection based on the slider ID and the image path provided.
+//  *     tags:
+//  *       - Slider
+//  *     parameters:
+//  *       - in: path
+//  *         name: sliderId
+//  *         required: true
+//  *         schema:
+//  *           type: integer
+//  *         description: The ID of the slider from which the image will be deleted.
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         application/json:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               imagePath:
+//  *                 type: string
+//  *                 description: The full path of the image to be deleted.
+//  *
+//  *     responses:
+//  *       200:
+//  *         description: Image successfully deleted from the slider.
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: "Image deleted successfully from slider"
+//  *       404:
+//  *         description: Slider or image not found.
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   examples:
+//  *                     Slider not found: "Slider not found"
+//  *                     Image not found: "Image not found in slider"
+//  *       500:
+//  *         description: Internal server error
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: "Internal server error"
+//  */
+// app.delete("/api/sliders/:sliderId/images", async (req, res) => {
+//   const sliderId = req.params.sliderId;
+//   const imagePathToDelete = req.body.imagePath;
+
+//   try {
+//     // Find the Slider by ID
+//     const slider = await mdl.db.Slider.findByPk(sliderId);
+//     if (!slider) {
+//       return res.status(404).json({ error: "Slider not found" });
+//     }
+//     // console.log(imagePathToDelete);
+//     const filenameToDelete = path.basename(imagePathToDelete);
+//     // Check if the image path exists in the slider
+//     const imagePaths = slider.Imagepaths;
+//     const imageIndex = imagePaths.findIndex(
+//       (imagePath) => path.basename(imagePath) === filenameToDelete
+//     );
+//     if (imageIndex === -1) {
+//       return res.status(404).json({ error: "Image not found in slider" });
+//     }
+
+//     // Delete the image file from /uploads folder
+//     const filePath = path.join(
+//       __dirname,
+//       "uploads",
+//       path.basename(imagePathToDelete)
+//     );
+//     fs.unlink(filePath, (err) => {
+//       if (err) {
+//         console.error(`Error deleting file ${filePath}:`, err);
+//         return res.status(500).json({ error: "Error deleting image file" });
+//       } else {
+//         console.log(`Successfully deleted file ${filePath}`);
+//       }
+//     });
+
+//     // Remove the image path from the slider's Imagepaths array
+//     imagePaths.splice(imageIndex, 1);
+//     // slider.Imagepaths = imagePaths;
+
+//     // Save the updated slider
+//     // await slider.save();
+//     await mdl.db.Slider.update(
+//       { Imagepaths: imagePaths },
+//       { where: { id: sliderId } }
+//     );
+
+//     res.json({ message: "Image deleted successfully from slider" });
+//   } catch (error) {
+//     console.error("Error deleting image from slider:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
+//slider api ends here
+
+//apis for news and Notices
+
+// /**
+//  * @swagger
+//  * /newsnotices/create:
+//  *   post:
+//  *     summary: Create News And Notices
+//  *     description: To create news and notices .
+//  *     tags:
+//  *       - News And Notices
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         multipart/form-data:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               Title:
+//  *                 type: string
+//  *                 description: Title Of the News or Notice
+//  *                 example: "New Event"
+//  *               Description:
+//  *                 type: string
+//  *                 description: Description of the News or Notice
+//  *                 example: "Details about the new event."
+//  *               Image:
+//  *                 type: string
+//  *                 format: binary
+//  *                 description: Image to be uploaded for the News or Notice
+//  *               Date:
+//  *                 type: string
+//  *                 format: date
+//  *                 description: Enter Date in format(yyyy-mm-dd)
+//  *                 example: "2024-06-04"
+//  *               Status:
+//  *                 type: boolean
+//  *                 description: Status for the news or notice
+//  *               Type:
+//  *                 type: string
+//  *                 enum: [News,Notice]
+//  *                 description: Type News Or Notice
+//  *     responses:
+//  *        201:
+//  *          description: NewsNotice created successfully
+//  *          content:
+//  *            application/json:
+//  *              schema:
+//  *                type: object
+//  *                properties:
+//  *                  message:
+//  *                    type: string
+//  *                    example: 'News or Notice Created Successfully'
+//  *                  newsNotice:
+//  *                    type: object
+//  *                    properties:
+//  *                      Title:
+//  *                        type: string
+//  *                      Description:
+//  *                        type: string
+//  *                      Date:
+//  *                        type: string
+//  *                      ImagePath:
+//  *                        type: string
+//  *                      Status:
+//  *                        type: boolean
+//  *                      Type:
+//  *                        type: string
+//  *        500:
+//  *          description: Internal Server Error
+//  *          content:
+//  *            application/json:
+//  *              schema:
+//  *                type: object
+//  *                properties:
+//  *                  error:
+//  *                    type: string
+//  *                    example: "Internal Server Error"
+//  */
+// app.post("/newsnotices/create", upload.single("Image"), async (req, res) => {
+//   const { Title, Description, Date, Status, Type } = req.body;
+//   const Image = req.file;
+//   let imagePath = null;
+
+//   if (Image) {
+//     imagePath = `http://localhost:3000/uploads/${Image.filename}`;
+//   }
+
+//   try {
+//     const newNewsNotice = await mdl.db.NewsNotice.create({
+//       Title: Title,
+//       Description: Description,
+//       Date: Date,
+//       ImagePath: imagePath,
+//       Status: !!Status,
+//       Type: Type,
+//     });
+//     res.status(201).json({
+//       message: "NewsNotice created successfully",
+//       newsNotice: newNewsNotice,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
+
+//get using the id
+
+// /**
+//  * @swagger
+//  * /newsnotices/{Id}:
+//  *   get:
+//  *     summary: Retrieve a specific News or Notice
+//  *     description: Fetches details of a specific News or Notice by its ID.
+//  *     tags:
+//  *       - News And Notices
+//  *     parameters:
+//  *       - in: path
+//  *         name: Id
+//  *         required: true
+//  *         schema:
+//  *           type: integer
+//  *         description: The ID of the slider to retrieve
+//  *     responses:
+//  *       200:
+//  *        description: Details Of News and Notice
+//  *        content:
+//  *          application/json:
+//  *            schema:
+//  *              type: object
+//  *              properties:
+//  *                message:
+//  *                  type: string
+//  *                  example: 'Details Of News Or Notice'
+//  *                newsNotice:
+//  *                  type: object
+//  *                  properties:
+//  *                    Title:
+//  *                      type: string
+//  *                    Description:
+//  *                      type: string
+//  *                    Date:
+//  *                      type: string
+//  *                    ImagePath:
+//  *                      type: string
+//  *                    Status:
+//  *                      type: boolean
+//  *                    Type:
+//  *                      type: string
+//  *       404:
+//  *         description: News Or Notice Not found
+//  *         content:
+//  *          application/json:
+//  *            schema:
+//  *             type: object
+//  *             properties:
+//  *              error:
+//  *                type: string
+//  *                examples: 'NewsNotice not found'
+//  *       500:
+//  *         description: Internal Server Error
+//  *         content:
+//  *           application/json:
+//  *            schema:
+//  *              type: object
+//  *              properties:
+//  *                error:
+//  *                  type: string
+//  *                  example: "Internal Server Error"
+//  */
+// app.get("/newsnotices/:id", async (req, res) => {
+//   const { id } = req.params; // Extract the ID from the request parameters
+
+//   try {
+//     const newsNotice = await mdl.db.NewsNotice.findByPk(id); // Find the record by its primary key
+
+//     if (newsNotice) {
+//       res.status(200).json(newsNotice); // Return the found record
+//     } else {
+//       res.status(404).json({ error: "NewsNotice not found" }); // Return a 404 error if not found
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     res
+//       .status(500)
+//       .json({ error: "An error occurred while retrieving the news notice" }); // Handle any other errors
+//   }
+// });
+
+// //get all news and notices available
+
+// /**
+//  * @swagger
+//  * /newsnotices/get/all:
+//  *   get:
+//  *     summary: Retrieve all News and Notices
+//  *     description: Fetches details of a all News and Notice by it's ID.
+//  *     tags:
+//  *       - News And Notices
+//  *     responses:
+//  *       200:
+//  *        description: Details Of News and Notice
+//  *        content:
+//  *          application/json:
+//  *            schema:
+//  *              type: object
+//  *              properties:
+//  *                message:
+//  *                  type: string
+//  *                  example: 'Details Of News Or Notice'
+//  *                newsNotice:
+//  *                  type: object
+//  *                  properties:
+//  *                    Title:
+//  *                      type: string
+//  *                    Description:
+//  *                      type: string
+//  *                    Date:
+//  *                      type: string
+//  *                    ImagePath:
+//  *                      type: string
+//  *                    Status:
+//  *                      type: boolean
+//  *                    Type:
+//  *                      type: string
+//  *       404:
+//  *         description: News Or Notice Not found
+//  *         content:
+//  *          application/json:
+//  *            schema:
+//  *             type: object
+//  *             properties:
+//  *              error:
+//  *                type: string
+//  *                examples: 'NewsNotice not found'
+//  *       500:
+//  *         description: Internal Server Error
+//  *         content:
+//  *           application/json:
+//  *            schema:
+//  *              type: object
+//  *              properties:
+//  *                error:
+//  *                  type: string
+//  *                  example: "Internal Server Error"
+//  */
+// app.get("/newsnotices/get/all", async (req, res) => {
+//   try {
+//     const exnewsNotice = await mdl.db.NewsNotice.findAll(); // Find the record by its primary key
+
+//     if (exnewsNotice) {
+//       res.status(200).json(exnewsNotice); // Return the found record
+//     } else {
+//       res.status(404).json({ error: "NewsNotice not found" }); // Return a 404 error if not found
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     res
+//       .status(500)
+//       .json({ error: "An error occurred while retrieving the news notice" }); // Handle any other errors
+//   }
+// });
+
+// /**
+//  * @swagger
+//  * /newsnotices/update/{Id}:
+//  *   put:
+//  *     summary: Updates The specific news or notice
+//  *     description: Update details of a specific News or notice by slider ID.
+//  *     tags:
+//  *       - News And Notices
+//  *     parameters:
+//  *       - in: path
+//  *         name: Id
+//  *         required: true
+//  *         schema:
+//  *           type: integer
+//  *         description: The ID of the slider to retrieve
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         multipart/form-data:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               Title:
+//  *                 type: string
+//  *                 description: Title Of the News or Notice
+//  *               Description:
+//  *                 type: string
+//  *                 description: Description of the News or Notice
+//  *               Image:
+//  *                 type: string
+//  *                 format: binary
+//  *                 description: Image to be uploaded for the News or Notice
+//  *               Date:
+//  *                 type: string
+//  *                 format: date
+//  *                 description: Enter Date
+//  *               Status:
+//  *                 type: boolean
+//  *                 description: Status for the news or notice
+//  *               Type:
+//  *                 type: string
+//  *                 enum: [News,Notice]
+//  *                 description: Type News Or Notice
+//  *     responses:
+//  *       200:
+//  *        description: Details Of News and Notice
+//  *        content:
+//  *          application/json:
+//  *            schema:
+//  *              type: object
+//  *              properties:
+//  *                message:
+//  *                  type: string
+//  *                  example: 'Details Of News Or Notice'
+//  *                newsNotice:
+//  *                  type: object
+//  *                  properties:
+//  *                    Title:
+//  *                      type: string
+//  *                    Description:
+//  *                      type: string
+//  *                    Date:
+//  *                      type: string
+//  *                    ImagePath:
+//  *                      type: string
+//  *                    Status:
+//  *                      type: boolean
+//  *                    Type:
+//  *                      type: string
+//  *       404:
+//  *         description: News Or Notice Not found
+//  *         content:
+//  *          application/json:
+//  *            schema:
+//  *             type: object
+//  *             properties:
+//  *              error:
+//  *                type: string
+//  *                examples: 'NewsNotice not found'
+//  *       500:
+//  *         description: An error occurred while updating the news notice
+//  *         content:
+//  *           application/json:
+//  *            schema:
+//  *              type: object
+//  *              properties:
+//  *                error:
+//  *                  type: string
+//  *                  example: "An error occurred while updating the news notice"
+//  */
+// app.put("/newsnotices/update/:Id", upload.single("Image"), async (req, res) => {
+//   const { Id } = req.params;
+//   const { Title, Description, Date, Status, Type } = req.body;
+//   const Image = req.file;
+//   let imagePath = null;
+
+//   if (Image) {
+//     imagePath = `http://localhost:3000/uploads/${Image.filename}`;
+//   }
+//   try {
+//     const existingnewsnotice = await mdl.db.NewsNotice.findByPk(Id);
+//     if (existingnewsnotice) {
+//       if (Image && existingnewsnotice.ImagePath) {
+//         // Delete the existing image from the file system
+//         const existingImagePath = existingnewsnotice.ImagePath.replace(
+//           "http://localhost:3000",
+//           "./uploads"
+//         ); // Assuming images are stored in the 'public' directory
+//         fs.unlinkSync(existingImagePath);
+
+//         // Delete the existing image from the database
+//         existingnewsnotice.ImagePath = null;
+//       }
+
+//       // Update the existing news notice
+//       existingnewsnotice.Title = Title || existingnewsnotice.Title;
+//       existingnewsnotice.Description =
+//         Description || existingnewsnotice.Description;
+//       existingnewsnotice.Date = Date || existingnewsnotice.Date;
+//       existingnewsnotice.Status = Status || !!existingnewsnotice.Status;
+//       existingnewsnotice.Type = Type || existingnewsnotice.Type;
+
+//       // Only update ImagePath if a new image is uploaded
+//       if (imagePath) {
+//         existingnewsnotice.ImagePath = imagePath;
+//       }
+
+//       // Save the updated record
+//       await existingnewsnotice.save();
+
+//       res.status(200).json(existingnewsnotice);
+//     } else {
+//       res.status(404).json({ error: "NewsNotice not found" });
+//     }
+//   } catch (error) {
+//     res
+//       .status(500)
+//       .json({ message: "An error occurred while updating the news notice" });
+//   }
+// });
+
+//news notice delete api
+
+// /**
+//  * @swagger
+//  * /newsnotices/delete/{Id}:
+//  *   delete:
+//  *     summary: Delete a News or Notice
+//  *     description: Removes a specified News Or notice from table by it's Id.
+//  *     tags:
+//  *       - News And Notices
+//  *     parameters:
+//  *       - in: path
+//  *         name: Id
+//  *         required: true
+//  *         schema:
+//  *           type: integer
+//  *         description: The ID of the News or Notice to be deleted.
+//  *     responses:
+//  *       200:
+//  *         description: News or Notice deleted successfully.
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 message:
+//  *                   type: string
+//  *                   example: "News or Notice deleted successfully"
+//  *       500:
+//  *         description: Failed to delete the associated image file.
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   examples: 'Failed to delete the associated image file'
+//  *       501:
+//  *         description: An error occurred while deleting the news notice
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: "An error occurred while deleting the news notice"
+//  *       404:
+//  *         description: News or Notice not found
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 error:
+//  *                   type: string
+//  *                   example: "News or Notice not found"
+//  */
+
+// app.delete("/newsnotices/delete/:Id", async (req, res) => {
+//   const { Id } = req.params;
+
+//   try {
+//     const newsnotice = await mdl.db.NewsNotice.findByPk(Id);
+//     if (!newsnotice) {
+//       return res.status(404).json({ message: "NewsNotice not found" });
+//     }
+//     if (newsnotice.ImagePath) {
+//       const imagePath = path.resolve(
+//         __dirname,
+//         "./uploads",
+//         path.basename(newsnotice.ImagePath)
+//       );
+//       fs.unlink(imagePath, (err) => {
+//         if (err) {
+//           console.error("Failed to delete the image file:", err);
+//           return res
+//             .status(500)
+//             .json({ message: "Failed to delete the associated image file" });
+//         }
+//         console.log("Image file deleted successfully");
+//       });
+//       // res.send(imagePath);
+//     }
+//     await newsnotice.destroy();
+//     res.json({ message: "NewsNotice deleted successfully" });
+//   } catch (error) {
+//     res
+//       .status(501)
+//       .json({ message: "An error occurred while deleting the news notice" });
+//   }
+// });

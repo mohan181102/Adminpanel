@@ -1,0 +1,15 @@
+2024-08-02 16:40:53 [INFO] default - Request received to create staff member with phone number: +1234567890
+2024-08-02 16:40:53 [WARN] default - Attempt to create staff member with existing phone number: +1234567890
+2024-08-02 16:56:13 [INFO] default - Staff member with ID 1 retrieved successfully.
+2024-08-02 16:56:18 [INFO] default - Staff member with ID 2 retrieved successfully.
+2024-08-02 16:56:24 [INFO] default - Staff member with ID 3 retrieved successfully.
+2024-08-02 17:24:04 [INFO] default - Staff member with ID 3 retrieved successfully.
+2024-08-02 17:25:52 [INFO] default - Staff member with ID 3 updated successfully.
+2024-08-02 17:27:51 [INFO] default - Staff member with ID 3 updated successfully.
+2024-08-02 17:28:14 [INFO] default - Staff member with ID 3 retrieved successfully.
+2024-08-02 17:42:21 [INFO] default - Staff member with ID 3 deleted successfully.
+2024-08-03 17:17:26 [INFO] default - Request received to create staff member with phone number: +917000036359
+2024-08-03 17:17:26 [INFO] default - Staff member created successfully with ID: 1
+2024-08-09 15:54:00 [INFO] default - Request received to create staff member with phone number: +123456789022
+2024-08-09 15:54:00 [INFO] default - Staff member created successfully with ID: 2
+2024-08-09 15:54:21 [INFO] default - Staff member with ID 2 retrieved successfully.
